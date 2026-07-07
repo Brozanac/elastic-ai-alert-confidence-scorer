@@ -25,6 +25,32 @@ KNOWN_MANAGEMENT_HOSTS = [
     "JUMPBOX-01"
 ]
 
+def is_external_ip(ip_address: str) -> bool:
+    if not ip_address:
+        return False
+
+    private_prefixes = [
+        "10.",
+        "192.168.",
+        "172.16.",
+        "172.17.",
+        "172.18.",
+        "172.19.",
+        "172.20.",
+        "172.21.",
+        "172.22.",
+        "172.23.",
+        "172.24.",
+        "172.25.",
+        "172.26.",
+        "172.27.",
+        "172.28.",
+        "172.29.",
+        "172.30.",
+        "172.31."
+    ]
+
+    return not any(ip_address.startswith(prefix) for prefix in private_prefixes)
 
 def get_confidence_label(score: int) -> str:
     if score >= 70:
@@ -46,6 +72,9 @@ def score_alert(alert: dict) -> dict:
     process = alert.get("process", {})
     parent = process.get("parent", {})
     destination = alert.get("destination", {})
+    event = alert.get("event", {})
+    source = alert.get("source", {})
+
 
     rule_name = rule.get("name", "Unknown rule")
     severity = rule.get("severity", "").lower()
@@ -57,6 +86,10 @@ def score_alert(alert: dict) -> dict:
     process_name = process.get("name", "").lower()
     command_line = process.get("command_line", "").lower()
     parent_name = parent.get("name", "").lower()
+
+    event_action = event.get("action", "").lower()
+    event_categories = event.get("category", [])
+    source_ip = source.get("ip")
 
     destination_ip = destination.get("ip")
 
@@ -89,6 +122,20 @@ def score_alert(alert: dict) -> dict:
     if destination_ip:
         score += 10
         evidence.append(f"Network destination is present: {destination_ip}")
+
+        # Authentication-based suspicious indicators
+
+    if "authentication" in event_categories and "failed" in event_action:
+        score += 25
+        evidence.append("Failed authentication activity detected")
+
+    if source_ip and is_external_ip(source_ip):
+        score += 10
+        evidence.append(f"External source IP observed: {source_ip}")
+
+    if "vpn" in (host_name or "").lower() and "authentication" in event_categories:
+        score += 10
+        evidence.append("Authentication activity targeted a VPN-related host")
 
     # Missing context penalties
 
