@@ -1,0 +1,21 @@
+{
+  "rule": {
+    "name": "Multiple Failed Logins from External IP",
+    "severity": "medium",
+    "risk_score": 47
+  },
+  "host": {
+    "name": "VPN-GATEWAY-01"
+  },
+  "user": {
+    "name": "ulas"
+  },
+  "event": {
+    "category": ["authentication"],
+    "action": "failed-login",
+    "created": "2026-07-06T18:10:00Z"
+  },
+  "source": {
+    "ip": "45.155.205.44"
+  }
+}

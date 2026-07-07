@@ -1,0 +1,25 @@
+{
+  "rule": {
+    "name": "PowerShell Execution",
+    "severity": "medium",
+    "risk_score": 35
+  },
+  "host": {
+    "name": "SCCM-01"
+  },
+  "user": {
+    "name": "admin-deploy"
+  },
+  "process": {
+    "name": "powershell.exe",
+    "command_line": "powershell.exe -ExecutionPolicy Bypass -File deploy_patch.ps1",
+    "parent": {
+      "name": "services.exe"
+    }
+  },
+  "event": {
+    "category": ["process"],
+    "action": "start",
+    "created": "2026-07-06T19:00:00Z"
+  }
+}
