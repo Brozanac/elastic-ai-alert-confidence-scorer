@@ -59,6 +59,28 @@ def get_confidence_label(score: int) -> str:
         return "Medium"
     return "Low"
 
+def detect_alert_type(alert: dict) -> str:
+    event = alert.get("event", {})
+    process = alert.get("process", {})
+    network = alert.get("network", {})
+    rule = alert.get("rule", {})
+
+    event_categories = event.get("category", [])
+    rule_name = rule.get("name", "").lower()
+
+    if process:
+        return "process_execution"
+
+    if "authentication" in event_categories:
+        return "authentication"
+
+    if network or "network" in event_categories:
+        return "network"
+
+    if "malware" in rule_name:
+        return "file_or_malware"
+
+    return "unknown"
 
 def score_alert(alert: dict) -> dict:
     score = 0
@@ -74,6 +96,7 @@ def score_alert(alert: dict) -> dict:
     destination = alert.get("destination", {})
     event = alert.get("event", {})
     source = alert.get("source", {})
+    alert_type = detect_alert_type(alert)
 
 
     rule_name = rule.get("name", "Unknown rule")
@@ -147,21 +170,27 @@ def score_alert(alert: dict) -> dict:
         score -= 10
         missing_context.append("Missing user name")
 
-    if not process_name:
-        score -= 10
-        missing_context.append("Missing process name")
+    if alert_type == "process_execution":
+        if not process_name:
+            score -= 10
+            missing_context.append("Missing process name")
 
-    if not command_line:
-        score -= 10
-        missing_context.append("Missing process command line")
+        if not command_line:
+            score -= 10
+            missing_context.append("Missing process command line")
 
-    if not parent_name:
-        score -= 10
-        missing_context.append("Missing parent process")
+        if not parent_name:
+            score -= 10
+            missing_context.append("Missing parent process")
 
-    if not destination_ip:
-        missing_context.append("Missing destination IP or network context")
+    if alert_type == "authentication":
+        if not source_ip:
+            score -= 10
+            missing_context.append("Missing source IP")
 
+        if "authentication" not in event_categories:
+            score -= 10
+            missing_context.append("Missing authentication event category")
     # False-positive indicators
 
     if user_name in KNOWN_ADMIN_USERS:

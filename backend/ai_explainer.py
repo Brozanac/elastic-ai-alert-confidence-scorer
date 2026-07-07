@@ -71,9 +71,15 @@ def build_executive_summary(
             f"of {score}/100. Some suspicious indicators are present, but additional context is needed before reaching a final verdict."
         )
 
+    if false_positive_notes:
+        return (
+            f"The alert '{rule_name}' on host '{host}' for user '{user}' has a low confidence score "
+            f"of {score}/100. Some false-positive indicators were found, so the alert should be reviewed carefully before escalation."
+        )
+
     return (
         f"The alert '{rule_name}' on host '{host}' for user '{user}' has a low confidence score "
-        f"of {score}/100. The available evidence is limited or contains possible false-positive indicators."
+        f"of {score}/100. The available evidence is limited, so more context is needed before escalation."
     )
 
 
