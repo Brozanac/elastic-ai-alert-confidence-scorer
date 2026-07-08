@@ -121,3 +121,46 @@ Safe AI-style explanation
 JSON or Markdown report
 
 ```
+
+## Day 4 Progress
+
+Implemented alert-type-aware scoring.
+
+The scorer now detects the alert category before applying scoring rules.
+
+Supported alert types:
+
+- `process_execution`
+- `authentication`
+- `network`
+- `file_or_malware`
+- `privilege_escalation`
+- `unknown`
+
+This fixed an important scoring issue: authentication alerts were previously penalized for missing process fields such as `process.name`, `process.command_line`, and `process.parent.name`.
+
+Now, missing context is evaluated based on alert type.
+
+For example:
+
+- Process alerts care about process name, command line, parent process, and destination IP.
+- Authentication alerts care about source IP, event action, event outcome, user, and host.
+- Network alerts care about source IP, destination IP, destination port, and protocol.
+- File alerts care about file name, file path, and file hash.
+
+## New Sample Alerts
+
+Added:
+
+- `network_sensitive_port.json`
+- `suspicious_file_download.json`
+
+## Example Result
+
+```text
+Alert file: failed_login_bruteforce.json
+Rule: Multiple Failed Logins from External IP
+Alert Type: authentication
+Score: 55/100
+Confidence: Medium
+```
