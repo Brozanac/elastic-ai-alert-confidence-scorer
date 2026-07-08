@@ -1,0 +1,25 @@
+{
+  "rule": {
+    "name": "Suspicious Executable Download",
+    "severity": "high",
+    "risk_score": 74
+  },
+  "host": {
+    "name": "WIN-USER-02"
+  },
+  "user": {
+    "name": "ulas"
+  },
+  "event": {
+    "category": ["file"],
+    "action": "creation",
+    "created": "2026-07-07T13:15:00Z"
+  },
+  "file": {
+    "name": "invoice_update.exe",
+    "path": "C:\\Users\\ulas\\Downloads\\invoice_update.exe",
+    "hash": {
+      "sha256": "8f14e45fceea167a5a36dedd4bea2543a1b2c3d4e5f678901234567890abcdef"
+    }
+  }
+}

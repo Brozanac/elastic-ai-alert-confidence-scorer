@@ -32,6 +32,7 @@ def print_demo_result(alert_file: Path) -> None:
     print(f"Alert file: {alert_file.name}")
     print("==========================================")
     print(f"Rule: {score_result.get('rule_name')}")
+    print(f"Alert Type: {score_result.get('alert_type')}")
     print(f"Host: {score_result.get('host')}")
     print(f"User: {score_result.get('user')}")
     print(f"Score: {score_result.get('score')}/100")

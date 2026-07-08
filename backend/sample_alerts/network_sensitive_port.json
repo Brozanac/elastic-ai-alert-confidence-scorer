@@ -1,0 +1,28 @@
+{
+  "rule": {
+    "name": "External Connection to Sensitive Port",
+    "severity": "medium",
+    "risk_score": 52
+  },
+  "host": {
+    "name": "APP-SERVER-01"
+  },
+  "user": {
+    "name": "service-web"
+  },
+  "event": {
+    "category": ["network"],
+    "action": "connection_attempt",
+    "created": "2026-07-07T12:45:00Z"
+  },
+  "source": {
+    "ip": "185.220.101.44"
+  },
+  "destination": {
+    "ip": "10.0.1.15",
+    "port": 3389
+  },
+  "network": {
+    "protocol": "tcp"
+  }
+}

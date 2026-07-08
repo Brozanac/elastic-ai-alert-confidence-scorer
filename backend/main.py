@@ -35,6 +35,7 @@ def score_elastic_alert(alert: dict):
 
     return {
         "alert_name": score_result.get("rule_name"),
+        "alert_type": score_result.get("alert_type"),
         "host": score_result.get("host"),
         "user": score_result.get("user"),
         "confidence": {
@@ -78,6 +79,7 @@ def explain_elastic_alert(alert: dict):
 
     return {
         "alert_name": score_result.get("rule_name"),
+        "alert_type": score_result.get("alert_type"),
         "confidence_score": score_result.get("score"),
         "confidence_level": score_result.get("confidence"),
         "ai_style_explanation": explanation
@@ -100,6 +102,7 @@ def full_elastic_alert_analysis(alert: dict):
 
     return {
         "alert_name": score_result.get("rule_name"),
+        "alert_type": score_result.get("alert_type"),
         "host": score_result.get("host"),
         "user": score_result.get("user"),
         "confidence": {
