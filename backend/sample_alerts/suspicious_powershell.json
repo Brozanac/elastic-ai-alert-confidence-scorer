@@ -11,7 +11,7 @@
     }
   },
   "user": {
-    "name": "ulas"
+    "name": "user"
   },
   "process": {
     "name": "powershell.exe",

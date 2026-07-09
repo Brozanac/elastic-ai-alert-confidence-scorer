@@ -8,7 +8,7 @@
     "name": "VPN-GATEWAY-01"
   },
   "user": {
-    "name": "ulas"
+    "name": "user"
   },
   "event": {
     "category": ["authentication"],
