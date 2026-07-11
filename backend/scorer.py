@@ -1,3 +1,5 @@
+from context_loader import load_environment_context
+
 SUSPICIOUS_PROCESSES = [
     "powershell.exe",
     "cmd.exe",
@@ -17,15 +19,7 @@ SUSPICIOUS_OFFICE_PARENTS = [
     "powerpnt.exe"
 ]
 
-KNOWN_ADMIN_USERS = [
-    "admin-deploy",
-    "sccm-admin"
-]
 
-KNOWN_MANAGEMENT_HOSTS = [
-    "SCCM-01",
-    "JUMPBOX-01"
-]
 
 SENSITIVE_PORTS = [
     22,
@@ -47,32 +41,16 @@ def get_confidence_label(score: int) -> str:
     return "Low"
 
 
-def is_external_ip(ip_address: str) -> bool:
+def is_external_ip(ip_address: str, environment_context: dict | None = None) -> bool:
     if not ip_address:
         return False
 
-    private_prefixes = [
-        "10.",
-        "192.168.",
-        "172.16.",
-        "172.17.",
-        "172.18.",
-        "172.19.",
-        "172.20.",
-        "172.21.",
-        "172.22.",
-        "172.23.",
-        "172.24.",
-        "172.25.",
-        "172.26.",
-        "172.27.",
-        "172.28.",
-        "172.29.",
-        "172.30.",
-        "172.31."
-    ]
+    if environment_context is None:
+        environment_context = load_environment_context()
 
-    return not any(ip_address.startswith(prefix) for prefix in private_prefixes)
+    trusted_prefixes = environment_context.get("trusted_internal_subnets", [])
+
+    return not any(ip_address.startswith(prefix) for prefix in trusted_prefixes)
 
 
 def detect_alert_type(alert: dict) -> str:
@@ -209,7 +187,9 @@ def score_authentication_alert(
         score += 25
         evidence.append("Failed authentication activity detected")
 
-    if source_ip and is_external_ip(source_ip):
+    environment_context = load_environment_context()
+
+    if source_ip and is_external_ip(source_ip, environment_context):
         score += 10
         evidence.append(f"External source IP observed: {source_ip}")
 
@@ -240,13 +220,14 @@ def score_network_alert(
     missing_context: list
 ) -> int:
     score = 0
+    environment_context = load_environment_context()
 
     source_ip = source.get("ip")
     destination_ip = destination.get("ip")
     destination_port = destination.get("port")
     protocol = network.get("protocol", "").lower()
 
-    if source_ip and is_external_ip(source_ip):
+    if source_ip and is_external_ip(source_ip, environment_context):
         score += 10
         evidence.append(f"External source IP observed: {source_ip}")
 
@@ -366,17 +347,35 @@ def apply_common_missing_context(
 def apply_false_positive_context(
     host_name: str,
     user_name: str,
+    process: dict,
     false_positive_notes: list
 ) -> int:
     score = 0
+    environment_context = load_environment_context()
 
-    if user_name in KNOWN_ADMIN_USERS:
-        score -= 15
-        false_positive_notes.append("User is a known admin or automation account")
+    known_admin_users = environment_context.get("known_admin_users", [])
+    known_management_hosts = environment_context.get("known_management_hosts", [])
+    known_security_tools = environment_context.get("known_security_tools", [])
+    expected_automation_users = environment_context.get("expected_automation_users", [])
+    expected_automation_hosts = environment_context.get("expected_automation_hosts", [])
 
-    if host_name in KNOWN_MANAGEMENT_HOSTS:
+    process_name = process.get("name", "").lower()
+
+    if user_name in known_admin_users:
         score -= 15
-        false_positive_notes.append("Host is a known management server")
+        false_positive_notes.append("User is a known admin or automation account from environment context")
+
+    if host_name in known_management_hosts:
+        score -= 15
+        false_positive_notes.append("Host is a known management server from environment context")
+
+    if process_name in known_security_tools:
+        score -= 20
+        false_positive_notes.append("Process is a known security tool from environment context")
+
+    if user_name in expected_automation_users and host_name in expected_automation_hosts:
+        score -= 15
+        false_positive_notes.append("Activity matches expected automation user and host context")
 
     return score
 
@@ -450,9 +449,15 @@ def score_alert(alert: dict) -> dict:
     else:
         missing_context.append("Unknown alert type; no category-specific scoring applied")
 
+    score += apply_asset_context(
+    host_name=host_name,
+    evidence=evidence
+)
+
     score += apply_false_positive_context(
         host_name=host_name,
         user_name=user_name,
+        process=process,
         false_positive_notes=false_positive_notes
     )
 

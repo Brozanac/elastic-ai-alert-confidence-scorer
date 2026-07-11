@@ -1,4 +1,5 @@
 from ai_explainer import generate_ai_style_explanation
+from context_loader import load_environment_context
 from fastapi import FastAPI
 from mitre_mapper import map_mitre
 from report_generator import generate_markdown_report, generate_next_steps
@@ -10,6 +11,9 @@ app = FastAPI(
     version="0.3.0"
 )
 
+@app.get("/environment-context")
+def get_environment_context():
+    return load_environment_context()
 
 @app.get("/")
 def root():
