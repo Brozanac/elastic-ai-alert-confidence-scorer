@@ -379,6 +379,20 @@ def apply_false_positive_context(
 
     return score
 
+def apply_asset_context(
+    host_name: str,
+    evidence: list
+) -> int:
+    score = 0
+    environment_context = load_environment_context()
+
+    critical_assets = environment_context.get("critical_assets", [])
+
+    if host_name in critical_assets:
+        score += 10
+        evidence.append(f"Affected host is a critical asset: {host_name}")
+
+    return score
 
 def score_alert(alert: dict) -> dict:
     score = 0
