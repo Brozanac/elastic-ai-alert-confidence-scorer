@@ -394,11 +394,76 @@ def apply_asset_context(
 
     return score
 
+def clamp_score(score: int) -> int:
+    return max(0, min(score, 100))
+
+
+def get_impact(points: int) -> str:
+    if points > 0:
+        return "positive"
+    if points < 0:
+        return "negative"
+    return "neutral"
+
+
+def add_scoring_event(
+    scoring_events: list,
+    component: str,
+    points: int,
+    details: list
+) -> None:
+    """
+    Records one scoring step.
+
+    Example:
+    {
+        "component": "authentication_scoring",
+        "points": 45,
+        "impact": "positive",
+        "details": [
+            "Failed authentication activity detected",
+            "External source IP observed: 45.155.205.44"
+        ]
+    }
+    """
+
+    if points == 0 and not details:
+        return
+
+    scoring_events.append({
+        "component": component,
+        "points": points,
+        "impact": get_impact(points),
+        "details": details
+    })
+
+
+def build_score_breakdown(scoring_events: list, raw_score: int, final_score: int) -> dict:
+    positive_points = sum(
+        event["points"]
+        for event in scoring_events
+        if event["points"] > 0
+    )
+
+    negative_points = sum(
+        event["points"]
+        for event in scoring_events
+        if event["points"] < 0
+    )
+
+    return {
+        "positive_points": positive_points,
+        "negative_points": negative_points,
+        "raw_score": raw_score,
+        "final_score": final_score
+    }
+
 def score_alert(alert: dict) -> dict:
     score = 0
     evidence = []
     missing_context = []
     false_positive_notes = []
+    scoring_events = []
 
     rule = alert.get("rule", {})
     host = alert.get("host", {})
@@ -416,19 +481,56 @@ def score_alert(alert: dict) -> dict:
 
     alert_type = detect_alert_type(alert)
 
-    score += apply_global_rule_scoring(rule, evidence)
-    score += apply_common_missing_context(host_name, user_name, missing_context)
+    # 1. Global rule scoring
+
+    evidence_before = len(evidence)
+    delta = apply_global_rule_scoring(rule, evidence)
+    score += delta
+
+    add_scoring_event(
+        scoring_events=scoring_events,
+        component="global_rule_scoring",
+        points=delta,
+        details=evidence[evidence_before:]
+    )
+
+    # 2. Common missing context
+
+    missing_before = len(missing_context)
+    delta = apply_common_missing_context(host_name, user_name, missing_context)
+    score += delta
+
+    add_scoring_event(
+        scoring_events=scoring_events,
+        component="common_missing_context",
+        points=delta,
+        details=missing_context[missing_before:]
+    )
+
+    # 3. Alert-type-specific scoring
+
+    evidence_before = len(evidence)
+    missing_before = len(missing_context)
 
     if alert_type == "process_execution":
-        score += score_process_execution_alert(
+        delta = score_process_execution_alert(
             process=process,
             destination=destination,
             evidence=evidence,
             missing_context=missing_context
         )
 
+        score += delta
+
+        add_scoring_event(
+            scoring_events=scoring_events,
+            component="process_execution_scoring",
+            points=delta,
+            details=evidence[evidence_before:] + missing_context[missing_before:]
+        )
+
     elif alert_type == "authentication":
-        score += score_authentication_alert(
+        delta = score_authentication_alert(
             event=event,
             host_name=host_name,
             source=source,
@@ -436,8 +538,17 @@ def score_alert(alert: dict) -> dict:
             missing_context=missing_context
         )
 
+        score += delta
+
+        add_scoring_event(
+            scoring_events=scoring_events,
+            component="authentication_scoring",
+            points=delta,
+            details=evidence[evidence_before:] + missing_context[missing_before:]
+        )
+
     elif alert_type == "network":
-        score += score_network_alert(
+        delta = score_network_alert(
             source=source,
             destination=destination,
             network=network,
@@ -445,46 +556,113 @@ def score_alert(alert: dict) -> dict:
             missing_context=missing_context
         )
 
+        score += delta
+
+        add_scoring_event(
+            scoring_events=scoring_events,
+            component="network_scoring",
+            points=delta,
+            details=evidence[evidence_before:] + missing_context[missing_before:]
+        )
+
     elif alert_type == "file_or_malware":
-        score += score_file_or_malware_alert(
+        delta = score_file_or_malware_alert(
             file=file,
             evidence=evidence,
             missing_context=missing_context
         )
 
+        score += delta
+
+        add_scoring_event(
+            scoring_events=scoring_events,
+            component="file_or_malware_scoring",
+            points=delta,
+            details=evidence[evidence_before:] + missing_context[missing_before:]
+        )
+
     elif alert_type == "privilege_escalation":
-        score += score_privilege_escalation_alert(
+        delta = score_privilege_escalation_alert(
             rule=rule,
             user=user,
             evidence=evidence,
             missing_context=missing_context
         )
 
+        score += delta
+
+        add_scoring_event(
+            scoring_events=scoring_events,
+            component="privilege_escalation_scoring",
+            points=delta,
+            details=evidence[evidence_before:] + missing_context[missing_before:]
+        )
+
     else:
         missing_context.append("Unknown alert type; no category-specific scoring applied")
 
-    score += apply_asset_context(
-    host_name=host_name,
-    evidence=evidence
-)
+        add_scoring_event(
+            scoring_events=scoring_events,
+            component="unknown_alert_type",
+            points=0,
+            details=["Unknown alert type; no category-specific scoring applied"]
+        )
 
-    score += apply_false_positive_context(
+    # 4. Asset context
+
+    evidence_before = len(evidence)
+
+    delta = apply_asset_context(
+        host_name=host_name,
+        evidence=evidence
+    )
+
+    score += delta
+
+    add_scoring_event(
+        scoring_events=scoring_events,
+        component="asset_context",
+        points=delta,
+        details=evidence[evidence_before:]
+    )
+
+    # 5. False-positive context
+
+    false_positive_before = len(false_positive_notes)
+
+    delta = apply_false_positive_context(
         host_name=host_name,
         user_name=user_name,
         process=process,
         false_positive_notes=false_positive_notes
     )
 
-    score = max(0, min(score, 100))
+    score += delta
+
+    add_scoring_event(
+        scoring_events=scoring_events,
+        component="false_positive_context",
+        points=delta,
+        details=false_positive_notes[false_positive_before:]
+    )
+
+    raw_score = score
+    final_score = clamp_score(raw_score)
 
     return {
         "alert_type": alert_type,
         "rule_name": rule_name,
         "host": host_name or "Unknown host",
         "user": user_name or "Unknown user",
-        "score": score,
-        "confidence": get_confidence_label(score),
+        "score": final_score,
+        "confidence": get_confidence_label(final_score),
         "evidence": evidence,
         "missing_context": missing_context,
-        "false_positive_notes": false_positive_notes
+        "false_positive_notes": false_positive_notes,
+        "scoring_events": scoring_events,
+        "score_breakdown": build_score_breakdown(
+            scoring_events=scoring_events,
+            raw_score=raw_score,
+            final_score=final_score
+        )
     }

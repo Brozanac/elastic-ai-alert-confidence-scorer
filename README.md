@@ -164,3 +164,34 @@ Alert Type: authentication
 Score: 55/100
 Confidence: Medium
 ```
+
+## Day 5 Progress
+
+Implemented environment-aware scoring.
+
+The scorer now loads organization-specific context from:
+
+```text
+backend/config/environment_context.json
+```
+
+## Day 6 Progress
+
+Implemented explainable score breakdown.
+
+The scorer now returns:
+
+- `score_breakdown`
+- `scoring_events`
+- positive points
+- negative points
+- raw score
+- final clamped score
+
+This makes the confidence score transparent.
+
+Instead of only returning:
+
+```text
+Score: 65/100
+```

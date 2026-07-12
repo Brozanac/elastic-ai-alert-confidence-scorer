@@ -59,6 +59,31 @@ def generate_markdown_report(alert: dict, score_result: dict, mitre_result: dict
     lines.append(f"- Confidence Score: {score_result.get('score')}/100")
     lines.append(f"- Confidence Level: {score_result.get('confidence')}")
     lines.append("")
+    lines.append("## Score Breakdown")
+    score_breakdown = score_result.get("score_breakdown", {})
+
+    lines.append(f"- Positive Points: {score_breakdown.get('positive_points')}")
+    lines.append(f"- Negative Points: {score_breakdown.get('negative_points')}")
+    lines.append(f"- Raw Score: {score_breakdown.get('raw_score')}")
+    lines.append(f"- Final Score: {score_breakdown.get('final_score')}")
+    lines.append("")
+
+    lines.append("## Scoring Events")
+    scoring_events = score_result.get("scoring_events", [])
+
+    if scoring_events:
+        for event in scoring_events:
+            points = event.get("points", 0)
+            sign = "+" if points > 0 else ""
+            component = event.get("component", "unknown_component")
+            lines.append(f"- {sign}{points} — {component}")
+
+            for detail in event.get("details", []):
+                lines.append(f"  - {detail}")
+    else:
+        lines.append("- No scoring events recorded.")
+
+    lines.append("")
 
     lines.append("## Evidence")
     evidence = score_result.get("evidence", [])

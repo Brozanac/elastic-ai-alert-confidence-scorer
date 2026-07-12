@@ -46,6 +46,8 @@ def score_elastic_alert(alert: dict):
             "score": score_result.get("score"),
             "level": score_result.get("confidence")
         },
+        "score_breakdown": score_result.get("score_breakdown"),
+        "scoring_events": score_result.get("scoring_events"),
         "evidence": score_result.get("evidence"),
         "missing_context": score_result.get("missing_context"),
         "false_positive_notes": score_result.get("false_positive_notes"),
