@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { analyzeAlert, analyzeAlertWithLLM, getHealth } from "./api";
 import "./App.css";
-
 const SAMPLE_ALERT = {
   rule: {
     name: "Suspicious PowerShell Encoded Command",
@@ -30,6 +29,8 @@ const SAMPLE_ALERT = {
     ip: "185.199.108.133"
   }
 };
+const [historyItems, setHistoryItems] = useState([]);
+const [historyLoading, setHistoryLoading] = useState(false);
 
 function App() {
   const [alertInput, setAlertInput] = useState(

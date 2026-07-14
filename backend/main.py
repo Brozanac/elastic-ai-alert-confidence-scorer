@@ -1,6 +1,8 @@
 from ai_explainer import generate_ai_style_explanation
 from context_loader import load_environment_context
-from fastapi import FastAPI
+from database import (delete_alert_history_record, get_alert_history_record,
+                      init_db, list_alert_history, save_alert_analysis)
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from llm_explainer import generate_llm_explanation
 from mitre_mapper import map_mitre
@@ -35,6 +37,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+init_db()
 
 @app.get("/health")
 def health_check():
@@ -119,13 +123,13 @@ def full_elastic_alert_analysis(alert: dict):
     )
 
     llm_result = generate_llm_explanation(
-    alert=alert,
-    score_result=score_result,
-    mitre_result=mitre_result,
-    next_steps=next_steps
-)
+        alert=alert,
+        score_result=score_result,
+        mitre_result=mitre_result,
+        next_steps=next_steps
+    )
 
-    return {
+    analysis_result = {
         "alert_name": score_result.get("rule_name"),
         "alert_type": score_result.get("alert_type"),
         "host": score_result.get("host"),
@@ -134,6 +138,8 @@ def full_elastic_alert_analysis(alert: dict):
             "score": score_result.get("score"),
             "level": score_result.get("confidence")
         },
+        "score_breakdown": score_result.get("score_breakdown"),
+        "scoring_events": score_result.get("scoring_events"),
         "evidence": score_result.get("evidence"),
         "missing_context": score_result.get("missing_context"),
         "false_positive_notes": score_result.get("false_positive_notes"),
@@ -142,8 +148,17 @@ def full_elastic_alert_analysis(alert: dict):
         "ai_style_explanation": explanation,
         "llm_explanation": llm_result,
         "markdown_report": markdown_report
-        
     }
+
+    saved_record = save_alert_analysis(
+        raw_alert=alert,
+        analysis_result=analysis_result
+    )
+
+    analysis_result["history_id"] = saved_record.get("id")
+    analysis_result["saved_to_history"] = True
+
+    return analysis_result
 
 @app.post("/score-alert/llm-explain")
 def llm_explain_alert(alert: dict):
@@ -175,4 +190,41 @@ def llm_explain_alert(alert: dict):
         "mitre_mapping": mitre_result,
         "analyst_next_steps": next_steps,
         "llm_explanation": llm_result
+    }
+
+
+@app.get("/alerts/history")
+def get_alert_history(limit: int = 25):
+    return {
+        "count": limit,
+        "items": list_alert_history(limit=limit)
+    }
+
+
+@app.get("/alerts/history/{history_id}")
+def get_single_alert_history_record(history_id: int):
+    record = get_alert_history_record(history_id)
+
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Alert history record not found"
+        )
+
+    return record
+
+
+@app.delete("/alerts/history/{history_id}")
+def delete_single_alert_history_record(history_id: int):
+    deleted = delete_alert_history_record(history_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Alert history record not found"
+        )
+
+    return {
+        "deleted": True,
+        "history_id": history_id
     }

@@ -41,3 +41,35 @@ export async function getHealth() {
 
   return response.json();
 }
+
+export async function getAlertHistory(limit = 25) {
+  const response = await fetch(`${API_BASE_URL}/alerts/history?limit=${limit}`);
+
+  if (!response.ok) {
+    throw new Error(`Backend returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getAlertHistoryRecord(historyId) {
+  const response = await fetch(`${API_BASE_URL}/alerts/history/${historyId}`);
+
+  if (!response.ok) {
+    throw new Error(`Backend returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteAlertHistoryRecord(historyId) {
+  const response = await fetch(`${API_BASE_URL}/alerts/history/${historyId}`, {
+    method: "DELETE"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend returned ${response.status}`);
+  }
+
+  return response.json();
+}
