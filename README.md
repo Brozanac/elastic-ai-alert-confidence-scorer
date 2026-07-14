@@ -232,3 +232,57 @@ OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-4.1-mini
 
 ```
+
+## Day 8 Progress
+
+Implemented a React dashboard for the Elastic AI Alert Confidence Scorer.
+
+The dashboard allows users to:
+
+- paste Elastic-style alert JSON
+- run full alert analysis
+- view confidence score
+- view alert type
+- view score breakdown
+- view scoring events
+- view evidence
+- view missing context
+- view false-positive notes
+- view MITRE ATT&CK mappings
+- view analyst next steps
+- optionally run LLM explanation
+
+## Running the Frontend
+
+Start the backend:
+
+```bash
+cd backend
+python -m uvicorn main:app --reload
+
+```
+
+## Day 9 Progress
+
+Implemented SQLite alert history.
+
+The backend now saves full alert analysis results when `/score-alert/full` is called.
+
+New backend features:
+
+- SQLite database
+- saved alert analysis history
+- full raw alert storage
+- full analysis result storage
+- alert history list endpoint
+- single alert history record endpoint
+- delete history record endpoint
+
+## New Endpoints
+
+```text
+GET /alerts/history
+GET /alerts/history/{history_id}
+DELETE /alerts/history/{history_id}
+
+```
