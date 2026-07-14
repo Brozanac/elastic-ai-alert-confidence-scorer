@@ -1,6 +1,7 @@
 from ai_explainer import generate_ai_style_explanation
 from context_loader import load_environment_context
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from llm_explainer import generate_llm_explanation
 from mitre_mapper import map_mitre
 from report_generator import generate_markdown_report, generate_next_steps
@@ -24,6 +25,16 @@ def root():
         "status": "running"
     }
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health_check():
