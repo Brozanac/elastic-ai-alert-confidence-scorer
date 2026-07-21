@@ -286,3 +286,174 @@ GET /alerts/history/{history_id}
 DELETE /alerts/history/{history_id}
 
 ```
+
+
+# Elastic AI Alert Confidence Scorer
+
+## Overview
+
+Elastic AI Alert Confidence Scorer is an AI-assisted SOC triage project that analyzes Elastic-style security alerts and assigns an explainable confidence score.
+
+The goal is to help analysts understand whether an alert has enough supporting evidence, what context is missing, whether false-positive indicators exist, and which MITRE ATT&CK techniques may apply.
+
+## Problem
+
+AI security assistants can summarize alerts, but analysts still need to know whether those explanations are supported by evidence.
+
+This project focuses on evidence-based scoring instead of black-box AI judgment.
+
+## Features
+
+- Elastic-style alert JSON analysis
+- Alert-type-aware scoring
+- Environment-aware scoring
+- Explainable score breakdown
+- MITRE ATT&CK mapping
+- False-positive notes
+- Analyst next steps
+- Safe local AI-style explanation
+- Optional LLM explanation
+- SQLite alert history
+- React dashboard
+- Docker support
+
+## Architecture
+
+```text
+Elastic-style Alert JSON
+        ↓
+React Dashboard / API
+        ↓
+FastAPI Backend
+        ↓
+Alert Type Detection
+        ↓
+Evidence Extraction
+        ↓
+Confidence Scoring
+        ↓
+Environment Context
+        ↓
+MITRE ATT&CK Mapping
+        ↓
+AI-Style Explanation
+        ↓
+SQLite History
+        ↓
+Analyst Report
+
+```
+
+## Tech Stack
+Python
+FastAPI
+SQLite
+SQLAlchemy
+React
+Vite
+Docker
+Optional OpenAI API
+
+## Running Locally
+### Backend
+python -m pip install -r requirements.txt
+cd backend
+python -m uvicorn main:app --reload
+
+#### Backend docs:
+
+http://127.0.0.1:8000/docs
+
+### Frontend
+cd frontend
+npm install
+npm run dev
+
+#### Frontend:
+
+http://127.0.0.1:5173
+
+## Running with Docker Compose
+
+Create a .env file from .env.example:
+```
+cp .env.example .env
+```
+
+Then run:
+
+```
+docker compose up --build
+```
+Open:
+```
+http://127.0.0.1:5173
+```
+
+## API Endpoints
+Method	Endpoint	Description
+GET	/	Project status
+GET	/health	Health check
+GET	/environment-context	Current environment context
+POST	/score-alert	Core alert scoring
+POST	/score-alert/report	Markdown report output
+POST	/score-alert/explain	Local AI-style explanation
+POST	/score-alert/llm-explain	Optional real LLM explanation
+POST	/score-alert/full	Full analysis and history save
+GET	/alerts/history	List saved analyses
+GET	/alerts/history/{history_id}	Get one saved analysis
+DELETE	/alerts/history/{history_id}	Delete saved analysis
+
+## Sample Alerts
+
+The project includes sample alerts for:
+
+Suspicious PowerShell execution
+Failed login brute force
+Likely false positive PowerShell activity
+Network connection to sensitive port
+Suspicious file download
+### Example Result
+```
+{
+  "alert_name": "Multiple Failed Logins from External IP",
+  "alert_type": "authentication",
+  "confidence": {
+    "score": 65,
+    "level": "Medium"
+  },
+  "evidence": [
+    "Failed authentication activity detected",
+    "External source IP observed: 45.155.205.44",
+    "Authentication activity targeted a VPN-related host",
+    "Affected host is a critical asset: VPN-GATEWAY-01"
+  ]
+}
+```
+
+## Security Design
+
+The LLM does not calculate the score.
+
+The confidence score is produced by deterministic scoring logic. The LLM, when enabled, only explains the existing score, evidence, MITRE mapping, and analyst next steps.
+
+Current Limitations
+Uses Elastic-style sample JSON, not direct Elastic API integration yet.
+Scoring logic is heuristic.
+MITRE mapping is rule-based.
+No authentication or user management.
+No production deployment hardening.
+LLM explanations require an API key.
+Future Improvements
+Connect directly to Elastic Security Alerts API
+Add Elastic Cases integration
+Add Attack Discovery validation
+Add historical baselining
+Add rule tuning recommendations
+Add user authentication
+Add export-to-PDF report feature
+Add unit tests
+Add CI/CD pipeline
+
+---
+

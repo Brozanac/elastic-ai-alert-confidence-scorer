@@ -4,10 +4,10 @@
 
 body {
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
   background: #0f172a;
   color: #e5e7eb;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
 button,
@@ -19,28 +19,25 @@ button {
   cursor: pointer;
 }
 
-.app-shell {
+.app {
   min-height: 100vh;
   padding: 32px;
 }
 
-.hero {
+.header {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  align-items: stretch;
   margin-bottom: 24px;
 }
 
-.hero h1 {
+.header h1 {
   margin: 0;
   font-size: 36px;
-  line-height: 1.1;
 }
 
-.hero-text {
+.header p {
   color: #cbd5e1;
-  max-width: 760px;
 }
 
 .eyebrow {
@@ -52,79 +49,34 @@ button {
   font-weight: 700;
 }
 
-.status-card {
-  min-width: 180px;
-  padding: 20px;
+.backend-card {
+  min-width: 220px;
+  padding: 16px;
   border: 1px solid #334155;
   border-radius: 16px;
   background: #111827;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.status-card span {
-  color: #94a3b8;
-}
-
-.status-card strong {
-  font-size: 24px;
+  gap: 12px;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr);
+  grid-template-columns: minmax(360px, 1fr) minmax(420px, 1fr);
   gap: 24px;
   align-items: start;
 }
 
 .panel {
+  padding: 20px;
   border: 1px solid #334155;
   border-radius: 18px;
   background: #111827;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-}
-
-.input-panel {
-  padding: 20px;
-  position: sticky;
-  top: 24px;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.panel h2 {
-  margin: 0 0 8px;
-}
-
-.panel p {
-  color: #cbd5e1;
-}
-
-.sample-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 16px 0;
-}
-
-.sample-buttons button,
-.status-card button,
-.secondary-button {
-  border: 1px solid #475569;
-  color: #e5e7eb;
-  background: #1e293b;
-  border-radius: 10px;
-  padding: 10px 12px;
 }
 
 textarea {
   width: 100%;
-  min-height: 500px;
+  min-height: 520px;
   resize: vertical;
   padding: 16px;
   color: #dbeafe;
@@ -132,125 +84,56 @@ textarea {
   border: 1px solid #334155;
   border-radius: 14px;
   line-height: 1.5;
-  font-family: "Cascadia Code", Consolas, monospace;
+  font-family: Consolas, "Cascadia Code", monospace;
 }
 
-.button-row {
-  display: flex;
-  gap: 12px;
+button {
+  border: 1px solid #475569;
+  color: #e5e7eb;
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.primary {
   margin-top: 16px;
-  flex-wrap: wrap;
-}
-
-.primary-button {
   border: none;
   color: #020617;
   background: #38bdf8;
-  border-radius: 10px;
-  padding: 12px 16px;
   font-weight: 700;
 }
 
-.results-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.empty-state {
-  padding: 24px;
-}
-
-.score-panel {
-  padding: 24px;
-  background: linear-gradient(135deg, #111827, #172554);
-}
-
-.score-panel h2 {
-  font-size: 32px;
-}
-
-.grid-two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.info-card {
-  padding: 20px;
-}
-
-.info-card ul,
-.info-card ol {
-  margin-bottom: 0;
-  padding-left: 22px;
-  color: #cbd5e1;
-}
-
-.info-card li {
-  margin: 6px 0;
-}
-
-.event-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.event-item {
-  padding: 14px;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  background: #020617;
-}
-
-.event-item strong {
-  color: #f8fafc;
-}
-
-.event-item p {
-  margin: 6px 0 0;
-}
-
-.muted {
-  color: #94a3b8 !important;
-  font-size: 14px;
-}
-
-.error-box {
+.error {
   margin-top: 16px;
-  padding: 14px;
+  padding: 12px;
   border-radius: 12px;
   color: #fecaca;
   background: #7f1d1d;
   border: 1px solid #ef4444;
 }
 
-.error-text {
-  color: #fecaca !important;
-}
-
-.llm-output {
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.5;
+.score-card {
   padding: 16px;
-  border-radius: 12px;
-  background: #020617;
-  color: #dbeafe;
+  border-radius: 14px;
+  background: #172554;
   border: 1px solid #334155;
 }
 
-@media (max-width: 1100px) {
+.score-card h3 {
+  margin-top: 0;
+  font-size: 28px;
+}
+
+li {
+  margin: 6px 0;
+  color: #cbd5e1;
+}
+
+@media (max-width: 1000px) {
   .layout,
-  .grid-two,
-  .hero {
+  .header {
     grid-template-columns: 1fr;
     flex-direction: column;
-  }
-
-  .input-panel {
-    position: static;
   }
 
   textarea {
