@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+backend/alert_history.db
+backend/*.db
+node_modules/
+dist/
