@@ -7,7 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from llm_explainer import generate_llm_explanation
 from mitre_mapper import map_mitre
 from report_generator import generate_markdown_report, generate_next_steps
+from schemas import AlertRequest
 from scorer import score_alert
+
+
+def alert_to_dict(alert: AlertRequest) -> dict:
+    return alert.model_dump(exclude_none=True)
 
 app = FastAPI(
     title="Elastic AI Alert Confidence Scorer",
@@ -48,7 +53,7 @@ def health_check():
 
 
 @app.post("/score-alert")
-def score_elastic_alert(alert: dict):
+def score_elastic_alert(alert: AlertRequest):
     score_result = score_alert(alert)
     mitre_result = map_mitre(alert)
     next_steps = generate_next_steps(score_result, mitre_result)
@@ -73,7 +78,7 @@ def score_elastic_alert(alert: dict):
 
 
 @app.post("/score-alert/report")
-def score_elastic_alert_report(alert: dict):
+def score_elastic_alert_report(alert: AlertRequest):
     score_result = score_alert(alert)
     mitre_result = map_mitre(alert)
     markdown_report = generate_markdown_report(alert, score_result, mitre_result)
@@ -87,7 +92,7 @@ def score_elastic_alert_report(alert: dict):
 
 
 @app.post("/score-alert/explain")
-def explain_elastic_alert(alert: dict):
+def explain_elastic_alert(alert: AlertRequest):
     score_result = score_alert(alert)
     mitre_result = map_mitre(alert)
     next_steps = generate_next_steps(score_result, mitre_result)
@@ -109,7 +114,7 @@ def explain_elastic_alert(alert: dict):
 
 
 @app.post("/score-alert/full")
-def full_elastic_alert_analysis(alert: dict):
+def full_elastic_alert_analysis(alert: AlertRequest):
     score_result = score_alert(alert)
     mitre_result = map_mitre(alert)
     next_steps = generate_next_steps(score_result, mitre_result)
@@ -161,7 +166,8 @@ def full_elastic_alert_analysis(alert: dict):
     return analysis_result
 
 @app.post("/score-alert/llm-explain")
-def llm_explain_alert(alert: dict):
+def llm_explain_alert(alert: AlertRequest):
+    alert_dict = alert_to_dict(alert)
     score_result = score_alert(alert)
     mitre_result = map_mitre(alert)
     next_steps = generate_next_steps(score_result, mitre_result)
