@@ -457,3 +457,29 @@ Add CI/CD pipeline
 
 ---
 
+## Safe Coding: Pydantic Input Validation
+
+The API validates incoming alert JSON with Pydantic models before scoring.
+
+This protects the scorer from malformed input while still allowing flexible Elastic/ECS-style fields.
+
+Validated fields include:
+
+- `rule.name`
+- `rule.severity`
+- `rule.risk_score`
+- `host.name`
+- `user.name`
+- `process.name`
+- `process.command_line`
+- `event.category`
+- `event.action`
+- `source.ip`
+- `destination.ip`
+- `destination.port`
+- `file.name`
+- `file.path`
+- `file.hash.sha256`
+
+Invalid input returns a `422 Unprocessable Entity` response instead of reaching the scoring logic.
+
