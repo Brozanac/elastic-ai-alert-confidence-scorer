@@ -54,8 +54,10 @@ def health_check():
 
 @app.post("/score-alert")
 def score_elastic_alert(alert: AlertRequest):
-    score_result = score_alert(alert)
-    mitre_result = map_mitre(alert)
+    alert_dict = alert_to_dict(alert)
+
+    score_result = score_alert(alert_dict)
+    mitre_result = map_mitre(alert_dict)
     next_steps = generate_next_steps(score_result, mitre_result)
 
     return {
@@ -79,9 +81,11 @@ def score_elastic_alert(alert: AlertRequest):
 
 @app.post("/score-alert/report")
 def score_elastic_alert_report(alert: AlertRequest):
-    score_result = score_alert(alert)
-    mitre_result = map_mitre(alert)
-    markdown_report = generate_markdown_report(alert, score_result, mitre_result)
+    alert_dict = alert_to_dict(alert)
+
+    score_result = score_alert(alert_dict)
+    mitre_result = map_mitre(alert_dict)
+    markdown_report = generate_markdown_report(alert_dict, score_result, mitre_result)
 
     return {
         "alert_name": score_result.get("rule_name"),
@@ -93,12 +97,14 @@ def score_elastic_alert_report(alert: AlertRequest):
 
 @app.post("/score-alert/explain")
 def explain_elastic_alert(alert: AlertRequest):
-    score_result = score_alert(alert)
-    mitre_result = map_mitre(alert)
+    alert_dict = alert_to_dict(alert)
+
+    score_result = score_alert(alert_dict)
+    mitre_result = map_mitre(alert_dict)
     next_steps = generate_next_steps(score_result, mitre_result)
 
     explanation = generate_ai_style_explanation(
-        alert=alert,
+        alert=alert_dict,
         score_result=score_result,
         mitre_result=mitre_result,
         next_steps=next_steps
@@ -115,20 +121,22 @@ def explain_elastic_alert(alert: AlertRequest):
 
 @app.post("/score-alert/full")
 def full_elastic_alert_analysis(alert: AlertRequest):
-    score_result = score_alert(alert)
-    mitre_result = map_mitre(alert)
+    alert_dict = alert_to_dict(alert)
+
+    score_result = score_alert(alert_dict)
+    mitre_result = map_mitre(alert_dict)
     next_steps = generate_next_steps(score_result, mitre_result)
-    markdown_report = generate_markdown_report(alert, score_result, mitre_result)
+    markdown_report = generate_markdown_report(alert_dict, score_result, mitre_result)
 
     explanation = generate_ai_style_explanation(
-        alert=alert,
+        alert=alert_dict,
         score_result=score_result,
         mitre_result=mitre_result,
         next_steps=next_steps
     )
 
     llm_result = generate_llm_explanation(
-        alert=alert,
+        alert=alert_dict,
         score_result=score_result,
         mitre_result=mitre_result,
         next_steps=next_steps
@@ -156,7 +164,7 @@ def full_elastic_alert_analysis(alert: AlertRequest):
     }
 
     saved_record = save_alert_analysis(
-        raw_alert=alert,
+        raw_alert=alert_dict,
         analysis_result=analysis_result
     )
 
@@ -168,12 +176,13 @@ def full_elastic_alert_analysis(alert: AlertRequest):
 @app.post("/score-alert/llm-explain")
 def llm_explain_alert(alert: AlertRequest):
     alert_dict = alert_to_dict(alert)
-    score_result = score_alert(alert)
-    mitre_result = map_mitre(alert)
+
+    score_result = score_alert(alert_dict)
+    mitre_result = map_mitre(alert_dict)
     next_steps = generate_next_steps(score_result, mitre_result)
 
     llm_result = generate_llm_explanation(
-        alert=alert,
+        alert=alert_dict,
         score_result=score_result,
         mitre_result=mitre_result,
         next_steps=next_steps
