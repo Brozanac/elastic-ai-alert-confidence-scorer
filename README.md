@@ -483,3 +483,19 @@ Validated fields include:
 
 Invalid input returns a `422 Unprocessable Entity` response instead of reaching the scoring logic.
 
+## Safe Coding: Request Size Limits
+
+The backend limits incoming request body size before alert JSON reaches the scoring engine.
+
+This helps prevent:
+
+- oversized alert payloads
+- unnecessary memory usage
+- slow request processing
+- accidental storage of huge payloads in SQLite history
+
+Current default:
+
+```text
+MAX_REQUEST_BODY_BYTES=1000000
+```

@@ -1,3 +1,5 @@
+import os
+
 from ai_explainer import generate_ai_style_explanation
 from context_loader import load_environment_context
 from database import (delete_alert_history_record, get_alert_history_record,
@@ -7,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from llm_explainer import generate_llm_explanation
 from mitre_mapper import map_mitre
 from report_generator import generate_markdown_report, generate_next_steps
+from request_limits import RequestSizeLimitMiddleware
 from schemas import AlertRequest
 from scorer import score_alert
 
@@ -18,6 +21,15 @@ app = FastAPI(
     title="Elastic AI Alert Confidence Scorer",
     description="Scores Elastic-style security alerts based on evidence, missing context, false-positive indicators, MITRE ATT&CK mapping, and safe AI-style explanation.",
     version="0.3.0"
+)
+
+MAX_REQUEST_BODY_BYTES = int(
+    os.getenv("MAX_REQUEST_BODY_BYTES", "1000000")
+)
+
+app.add_middleware(
+    RequestSizeLimitMiddleware,
+    max_body_size=MAX_REQUEST_BODY_BYTES
 )
 
 @app.get("/environment-context")
