@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from app_logging import logger
 from sqlalchemy import Column, DateTime, Integer, String, Text, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -86,6 +87,10 @@ def list_alert_history(limit: int = 25) -> list[dict[str, Any]]:
             for record in records
         ]
 
+    except Exception:
+        logger.exception("database_list_alert_history_failed")
+        raise
+
     finally:
         session.close()
 
@@ -104,6 +109,13 @@ def get_alert_history_record(history_id: int) -> dict[str, Any] | None:
             return None
 
         return serialize_history_record(record, include_full_analysis=True)
+
+    except Exception:
+        logger.exception(
+            "database_get_alert_history_record_failed history_id=%s",
+            history_id
+        )
+        raise
 
     finally:
         session.close()
@@ -126,6 +138,15 @@ def delete_alert_history_record(history_id: int) -> bool:
         session.commit()
 
         return True
+
+    except Exception:
+        session.rollback()
+
+        logger.exception(
+            "database_delete_alert_history_record_failed history_id=%s",
+            history_id
+        )
+        raise
 
     finally:
         session.close()

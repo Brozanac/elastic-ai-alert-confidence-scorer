@@ -2,6 +2,7 @@ import json
 import os
 from typing import Any
 
+from app_logging import logger
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -102,9 +103,11 @@ def generate_llm_explanation(
             "safety_note": "The LLM explanation is based on the existing score result. It does not calculate or override the confidence score."
         }
 
-    except Exception as error:
+    except Exception:
+        logger.exception("llm_explanation_failed")
+
         return {
             "enabled": False,
-            "error": str(error),
-            "message": "LLM explanation failed. The rule-based score is still valid."
+            "error": "LLM explanation failed.",
+            "message": "The rule-based score is still valid."
         }

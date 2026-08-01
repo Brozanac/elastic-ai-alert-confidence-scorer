@@ -66,8 +66,11 @@ function App() {
       const health = await getHealth();
       setBackendStatus(health.status === "ok" ? "Online" : "Unknown");
     } catch (err) {
-      setBackendStatus("Offline");
-      setError(err.message);
+      if (err instanceof SyntaxError) {
+        setError("Invalid JSON. Please check your alert input.");
+      } else {
+        setError("Analysis failed. Please try again.");
+      }
     }
   }
 
