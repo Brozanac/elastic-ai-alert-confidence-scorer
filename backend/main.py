@@ -5,6 +5,7 @@ from app_logging import configure_logging, logger
 from context_loader import load_environment_context
 from database import (delete_alert_history_record, get_alert_history_record,
                       init_db, list_alert_history, save_alert_analysis)
+from dotenv import load_dotenv
 from errors import internal_server_error, not_found
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ from schemas import AlertRequest
 from scorer import score_alert
 
 configure_logging()
+load_dotenv()
 
 def alert_to_dict(alert: AlertRequest) -> dict:
     return alert.model_dump(exclude_none=True)
@@ -50,13 +52,10 @@ def root():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173"
-    ],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 @app.exception_handler(Exception)
