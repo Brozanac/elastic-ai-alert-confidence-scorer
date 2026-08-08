@@ -1,0 +1,45 @@
+def test_saved_history_redacts_secrets():
+    alert_with_secret = {
+        "rule": {
+            "name": "Suspicious PowerShell With Secret",
+            "severity": "high",
+            "risk_score": 80
+        },
+        "host": {
+            "name": "WIN-DEV-01"
+        },
+        "user": {
+            "name": "ulas"
+        },
+        "process": {
+            "name": "powershell.exe",
+            "command_line": (
+                "powershell.exe -Command "
+                "\"api_key=sk-test12345678901234567890 "
+                "password=SuperSecret123\""
+            ),
+            "parent": {
+                "name": "winword.exe"
+            }
+        },
+        "event": {
+            "category": ["process"],
+            "action": "start"
+        }
+    }
+
+    create_response = client.post("/score-alert/full", json=alert_with_secret)
+
+    assert create_response.status_code == 200
+
+    history_id = create_response.json()["history_id"]
+
+    history_response = client.get(f"/alerts/history/{history_id}")
+
+    assert history_response.status_code == 200
+
+    history_text = str(history_response.json())
+
+    assert "sk-test12345678901234567890" not in history_text
+    assert "SuperSecret123" not in history_text
+    assert "[REDACTED]" in history_text
