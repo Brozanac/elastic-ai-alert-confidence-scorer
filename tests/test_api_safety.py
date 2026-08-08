@@ -1,3 +1,8 @@
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
 def test_saved_history_redacts_secrets():
     alert_with_secret = {
         "rule": {
