@@ -499,3 +499,21 @@ Current default:
 ```text
 MAX_REQUEST_BODY_BYTES=1000000
 ```
+## Safe Coding: Secret Redaction Before History Storage
+
+The backend redacts sensitive values before saving alert history to SQLite.
+
+Redacted data includes:
+
+- passwords
+- API keys
+- bearer tokens
+- authorization headers
+- client secrets
+- private key blocks
+- JWT-like tokens
+
+Scoring still uses the original alert data during request processing, but only redacted copies are saved to history.
+
+This reduces the risk of storing sensitive credentials in local history records.
+

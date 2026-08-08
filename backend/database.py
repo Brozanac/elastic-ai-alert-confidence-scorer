@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from app_logging import logger
+from redaction import create_redacted_copy
 from sqlalchemy import Column, DateTime, Integer, String, Text, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -44,21 +45,22 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def save_alert_analysis(raw_alert: dict[str, Any], analysis_result: dict[str, Any]) -> dict[str, Any]:
+def save_alert_analysis(raw_alert: dict, analysis_result: dict) -> dict:
     session = SessionLocal()
 
     try:
-        confidence = analysis_result.get("confidence", {})
+        safe_raw_alert = create_redacted_copy(raw_alert)
+        safe_analysis_result = create_redacted_copy(analysis_result)
 
         record = AlertAnalysisHistory(
-            alert_name=analysis_result.get("alert_name", "Unknown alert"),
-            alert_type=analysis_result.get("alert_type", "unknown"),
-            host=analysis_result.get("host", "Unknown host"),
-            user=analysis_result.get("user", "Unknown user"),
-            score=confidence.get("score", 0),
-            confidence=confidence.get("level", "Unknown"),
-            raw_alert_json=json.dumps(raw_alert, indent=2),
-            analysis_json=json.dumps(analysis_result, indent=2)
+            alert_name=safe_analysis_result.get("alert_name", "Unknown Alert"),
+            alert_type=safe_analysis_result.get("alert_type", "unknown"),
+            host=safe_analysis_result.get("host", "unknown"),
+            user=safe_analysis_result.get("user", "unknown"),
+            score=safe_analysis_result.get("confidence", {}).get("score", 0),
+            confidence=safe_analysis_result.get("confidence", {}).get("level", "Unknown"),
+            raw_alert_json=json.dumps(safe_raw_alert),
+            analysis_json=json.dumps(safe_analysis_result),
         )
 
         session.add(record)
@@ -66,6 +68,11 @@ def save_alert_analysis(raw_alert: dict[str, Any], analysis_result: dict[str, An
         session.refresh(record)
 
         return serialize_history_record(record, include_full_analysis=False)
+
+    except Exception:
+        session.rollback()
+        logger.exception("database_save_alert_analysis_failed")
+        raise
 
     finally:
         session.close()
