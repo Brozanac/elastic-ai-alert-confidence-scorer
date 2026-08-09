@@ -517,3 +517,12 @@ Scoring still uses the original alert data during request processing, but only r
 
 This reduces the risk of storing sensitive credentials in local history records.
 
+## Safe Coding: Strict CORS
+
+The backend restricts browser access to known frontend origins.
+
+Default local development origins:
+
+```text
+http://127.0.0.1:5173
+http://localhost:5173

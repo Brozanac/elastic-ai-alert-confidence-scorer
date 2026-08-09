@@ -50,6 +50,18 @@ def root():
         "status": "running"
     }
 
+def get_allowed_origins() -> list[str]:
+    raw_origins = os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://127.0.0.1:5173,http://localhost:5173"
+    )
+
+    return [
+        origin.strip()
+        for origin in raw_origins.split(",")
+        if origin.strip()
+    ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_origins(),

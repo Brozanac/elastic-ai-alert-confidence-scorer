@@ -48,3 +48,27 @@ def test_saved_history_redacts_secrets():
     assert "sk-test12345678901234567890" not in history_text
     assert "SuperSecret123" not in history_text
     assert "[REDACTED]" in history_text
+
+def test_cors_allows_local_vite_origin():
+    response = client.options(
+        "/score-alert/full",
+        headers={
+            "Origin": "http://127.0.0.1:5173",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
+
+
+def test_cors_rejects_unknown_origin():
+    response = client.options(
+        "/score-alert/full",
+        headers={
+            "Origin": "http://evil.example",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert "access-control-allow-origin" not in response.headers
