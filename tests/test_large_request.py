@@ -12,7 +12,7 @@ payload = {
         "name": "WIN-TEST-01"
     },
     "user": {
-        "name": "ulas"
+        "name": "user"
     },
     "process": {
         "name": "powershell.exe",

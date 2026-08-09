@@ -14,7 +14,7 @@ def test_saved_history_redacts_secrets():
             "name": "WIN-DEV-01"
         },
         "user": {
-            "name": "ulas"
+            "name": "user"
         },
         "process": {
             "name": "powershell.exe",
@@ -72,3 +72,54 @@ def test_cors_rejects_unknown_origin():
     )
 
     assert "access-control-allow-origin" not in response.headers
+
+def test_history_requires_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get("/alerts/history")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing API key."
+
+
+def test_history_accepts_valid_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history",
+        headers={
+            "X-API-Key": "test-key"
+        }
+    )
+
+    assert response.status_code == 200
+
+
+def test_history_rejects_wrong_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history",
+        headers={
+            "X-API-Key": "wrong-key"
+        }
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing API key."
+
+
+def test_single_history_record_requires_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get("/alerts/history/1")
+
+    assert response.status_code == 401
+
+
+def test_delete_history_record_requires_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.delete("/alerts/history/1")
+
+    assert response.status_code == 401

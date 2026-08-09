@@ -2,12 +2,13 @@ import os
 
 from ai_explainer import generate_ai_style_explanation
 from app_logging import configure_logging, logger
+from auth import require_api_key
 from context_loader import load_environment_context
 from database import (delete_alert_history_record, get_alert_history_record,
                       init_db, list_alert_history, save_alert_analysis)
 from dotenv import load_dotenv
 from errors import internal_server_error, not_found
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from llm_explainer import generate_llm_explanation
@@ -61,6 +62,8 @@ def get_allowed_origins() -> list[str]:
         for origin in raw_origins.split(",")
         if origin.strip()
     ]
+
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -264,7 +267,7 @@ def llm_explain_alert(alert: AlertRequest):
     }
 
 
-@app.get("/alerts/history")
+@app.get("/alerts/history", dependencies=[Depends(require_api_key)])
 def get_alert_history(limit: int = Query(default=25, ge=1, le=100)):
     try:
         items = list_alert_history(limit=limit)
@@ -287,7 +290,7 @@ def get_alert_history(limit: int = Query(default=25, ge=1, le=100)):
         raise internal_server_error("Failed to retrieve alert history.")
 
 
-@app.get("/alerts/history/{history_id}")
+@app.get("/alerts/history/{history_id}", dependencies=[Depends(require_api_key)])
 def get_single_alert_history_record(history_id: int):
     try:
         record = get_alert_history_record(history_id)
@@ -319,7 +322,7 @@ def get_single_alert_history_record(history_id: int):
         raise internal_server_error("Failed to retrieve alert history.")
 
 
-@app.delete("/alerts/history/{history_id}")
+@app.delete("/alerts/history/{history_id}", dependencies=[Depends(require_api_key)])
 def delete_single_alert_history_record(history_id: int):
     try:
         deleted = delete_alert_history_record(history_id)
