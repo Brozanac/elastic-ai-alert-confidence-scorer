@@ -2,7 +2,7 @@
 
 ## Project Goal
 
-This project scores Elastic-style security alerts based on confidence.
+This project scores Elastic-style security alerts based on confidence. This repository is used to document the implementation journey of this project.
 
 The goal is to help SOC analysts understand whether an AI-generated alert explanation is strongly supported by evidence, missing important context, or likely to be a false positive.
 
