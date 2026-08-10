@@ -140,3 +140,53 @@ li {
     min-height: 360px;
   }
 }
+
+.info-section {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: #0f172a;
+}
+
+.info-section h3 {
+  margin-top: 0;
+  color: #e5e7eb;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-item {
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+}
+
+.event-item p {
+  margin: 4px 0;
+}
+
+.plain-text-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 16px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #dbeafe;
+  font-family: Consolas, "Cascadia Code", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: 14px;
+}

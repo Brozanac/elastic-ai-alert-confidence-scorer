@@ -526,3 +526,24 @@ Default local development origins:
 ```text
 http://127.0.0.1:5173
 http://localhost:5173
+```
+
+## Safe Coding: Structured React Rendering
+
+The frontend avoids rendering backend-generated reports as raw HTML.
+
+Instead of using `dangerouslySetInnerHTML`, the dashboard renders analysis data through structured React components:
+
+- score summary
+- score breakdown
+- scoring events
+- evidence list
+- missing context list
+- false-positive notes
+- MITRE ATT&CK mappings
+- analyst next steps
+- AI-style explanation
+- LLM explanation as plain text
+
+This keeps alert fields treated as untrusted text and helps reduce the risk of accidental cross-site scripting.
+
