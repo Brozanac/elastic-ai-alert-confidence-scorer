@@ -123,3 +123,71 @@ def test_delete_history_record_requires_api_key_when_configured(monkeypatch):
     response = client.delete("/alerts/history/1")
 
     assert response.status_code == 401
+
+
+def test_history_limit_25_is_allowed(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history?limit=25",
+        headers={"X-API-Key": "test-key"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["limit"] == 25
+
+
+def test_history_limit_100_is_allowed(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history?limit=100",
+        headers={"X-API-Key": "test-key"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["limit"] == 100
+
+
+def test_history_limit_too_large_returns_422(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history?limit=999999",
+        headers={"X-API-Key": "test-key"}
+    )
+
+    assert response.status_code == 422
+
+
+def test_history_limit_zero_returns_422(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history?limit=0",
+        headers={"X-API-Key": "test-key"}
+    )
+
+    assert response.status_code == 422
+
+
+def test_history_limit_negative_returns_422(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history?limit=-5",
+        headers={"X-API-Key": "test-key"}
+    )
+
+    assert response.status_code == 422
+
+
+def test_history_limit_non_numeric_returns_422(monkeypatch):
+    monkeypatch.setenv("APP_API_KEY", "test-key")
+
+    response = client.get(
+        "/alerts/history?limit=abc",
+        headers={"X-API-Key": "test-key"}
+    )
+
+    assert response.status_code == 422
