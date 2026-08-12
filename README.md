@@ -554,3 +554,18 @@ The alert history endpoint validates the `limit` query parameter.
 ```python
 limit: int = Query(default=25, ge=1, le=100)
 ```
+## Safe Coding: Improved Database Session Handling
+
+The backend uses a FastAPI database dependency to manage SQLite sessions.
+
+A new database session is created for each request and automatically closed after the request finishes.
+
+```python
+def get_db():
+    db = SessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()
+```

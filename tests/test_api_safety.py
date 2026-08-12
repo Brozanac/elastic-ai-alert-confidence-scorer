@@ -1,3 +1,4 @@
+from database import SessionLocal, save_alert_analysis
 from fastapi.testclient import TestClient
 from main import app
 
@@ -191,3 +192,28 @@ def test_history_limit_non_numeric_returns_422(monkeypatch):
     )
 
     assert response.status_code == 422
+
+
+def test_direct_database_save():
+    db = SessionLocal()
+
+    try:
+        saved = save_alert_analysis(
+            db=db,
+            raw_alert={"rule": {"name": "Test Alert"}},
+            analysis_result={
+                "alert_name": "Test Alert",
+                "alert_type": "unknown",
+                "host": "unknown",
+                "user": "unknown",
+                "confidence": {
+                    "score": 0,
+                    "level": "Low"
+                }
+            }
+        )
+
+        assert "id" in saved
+
+    finally:
+        db.close()
