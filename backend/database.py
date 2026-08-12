@@ -1,4 +1,5 @@
 import json
+from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -6,7 +7,7 @@ from typing import Any
 from app_logging import logger
 from redaction import create_redacted_copy
 from sqlalchemy import Column, DateTime, Integer, String, Text, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 DB_PATH = Path(__file__).parent / "alert_history.db"
 DATABASE_URL = f"sqlite:///{DB_PATH.as_posix()}"
@@ -45,9 +46,19 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def save_alert_analysis(raw_alert: dict, analysis_result: dict) -> dict:
-    session = SessionLocal()
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
 
+    try:
+        yield db
+    finally:
+        db.close()
+
+def save_alert_analysis(
+    db: Session,
+    raw_alert: dict,
+    analysis_result: dict
+) -> dict:
     try:
         safe_raw_alert = create_redacted_copy(raw_alert)
         safe_analysis_result = create_redacted_copy(analysis_result)
@@ -58,32 +69,30 @@ def save_alert_analysis(raw_alert: dict, analysis_result: dict) -> dict:
             host=safe_analysis_result.get("host", "unknown"),
             user=safe_analysis_result.get("user", "unknown"),
             score=safe_analysis_result.get("confidence", {}).get("score", 0),
-            confidence=safe_analysis_result.get("confidence", {}).get("level", "Unknown"),
+            confidence=safe_analysis_result.get("confidence", {}).get(
+                "level",
+                "Unknown"
+            ),
             raw_alert_json=json.dumps(safe_raw_alert),
             analysis_json=json.dumps(safe_analysis_result),
         )
 
-        session.add(record)
-        session.commit()
-        session.refresh(record)
+        db.add(record)
+        db.commit()
+        db.refresh(record)
 
         return serialize_history_record(record, include_full_analysis=False)
 
     except Exception:
-        session.rollback()
+        db.rollback()
         logger.exception("database_save_alert_analysis_failed")
         raise
 
-    finally:
-        session.close()
 
-
-def list_alert_history(limit: int = 25) -> list[dict[str, Any]]:
-    session = SessionLocal()
-
+def list_alert_history(db: Session, limit: int = 25) -> list[dict[str, Any]]:
     try:
         records = (
-            session.query(AlertAnalysisHistory)
+            db.query(AlertAnalysisHistory)
             .order_by(AlertAnalysisHistory.created_at.desc())
             .limit(limit)
             .all()
@@ -98,16 +107,14 @@ def list_alert_history(limit: int = 25) -> list[dict[str, Any]]:
         logger.exception("database_list_alert_history_failed")
         raise
 
-    finally:
-        session.close()
 
-
-def get_alert_history_record(history_id: int) -> dict[str, Any] | None:
-    session = SessionLocal()
-
+def get_alert_history_record(
+    db: Session,
+    history_id: int
+) -> dict[str, Any] | None:
     try:
         record = (
-            session.query(AlertAnalysisHistory)
+            db.query(AlertAnalysisHistory)
             .filter(AlertAnalysisHistory.id == history_id)
             .first()
         )
@@ -124,16 +131,11 @@ def get_alert_history_record(history_id: int) -> dict[str, Any] | None:
         )
         raise
 
-    finally:
-        session.close()
 
-
-def delete_alert_history_record(history_id: int) -> bool:
-    session = SessionLocal()
-
+def delete_alert_history_record(db: Session, history_id: int) -> bool:
     try:
         record = (
-            session.query(AlertAnalysisHistory)
+            db.query(AlertAnalysisHistory)
             .filter(AlertAnalysisHistory.id == history_id)
             .first()
         )
@@ -141,13 +143,13 @@ def delete_alert_history_record(history_id: int) -> bool:
         if record is None:
             return False
 
-        session.delete(record)
-        session.commit()
+        db.delete(record)
+        db.commit()
 
         return True
 
     except Exception:
-        session.rollback()
+        db.rollback()
 
         logger.exception(
             "database_delete_alert_history_record_failed history_id=%s",
@@ -155,14 +157,27 @@ def delete_alert_history_record(history_id: int) -> bool:
         )
         raise
 
-    finally:
-        session.close()
+
+def safe_json_loads(value: str | None, fallback: Any) -> Any:
+    if not value:
+        return fallback
+
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        logger.exception("history_record_json_decode_failed")
+        return fallback
 
 
 def serialize_history_record(
     record: AlertAnalysisHistory,
     include_full_analysis: bool
 ) -> dict[str, Any]:
+    created_at = None
+
+    if record.created_at is not None:
+        created_at = record.created_at.isoformat()
+
     result = {
         "id": record.id,
         "alert_name": record.alert_name,
@@ -171,11 +186,17 @@ def serialize_history_record(
         "user": record.user,
         "score": record.score,
         "confidence": record.confidence,
-        "created_at": record.created_at.isoformat()
+        "created_at": created_at,
     }
 
     if include_full_analysis:
-        result["raw_alert"] = json.loads(record.raw_alert_json)
-        result["analysis"] = json.loads(record.analysis_json)
+        result["raw_alert"] = safe_json_loads(
+            record.raw_alert_json,
+            fallback={}
+        )
+        result["analysis"] = safe_json_loads(
+            record.analysis_json,
+            fallback={}
+        )
 
     return result

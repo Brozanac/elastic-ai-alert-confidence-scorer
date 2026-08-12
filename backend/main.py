@@ -5,7 +5,7 @@ from app_logging import configure_logging, logger
 from auth import require_api_key
 from context_loader import load_environment_context
 from database import (delete_alert_history_record, get_alert_history_record,
-                      init_db, list_alert_history, save_alert_analysis)
+                      get_db, init_db, list_alert_history, save_alert_analysis)
 from dotenv import load_dotenv
 from errors import internal_server_error, not_found
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -17,6 +17,7 @@ from report_generator import generate_markdown_report, generate_next_steps
 from request_limits import RequestSizeLimitMiddleware
 from schemas import AlertRequest
 from scorer import score_alert
+from sqlalchemy.orm import Session
 
 configure_logging()
 load_dotenv()
@@ -165,7 +166,7 @@ def explain_elastic_alert(alert: AlertRequest):
 
 
 @app.post("/score-alert/full")
-def full_elastic_alert_analysis(alert: AlertRequest):
+def full_elastic_alert_analysis(alert: AlertRequest, db: Session = Depends(get_db)):
     alert_dict = alert_to_dict(alert)
 
     try:
@@ -210,9 +211,10 @@ def full_elastic_alert_analysis(alert: AlertRequest):
         }
 
         saved_record = save_alert_analysis(
+            db=db,
             raw_alert=alert_dict,
             analysis_result=analysis_result
-        )
+)
 
         analysis_result["history_id"] = saved_record.get("id")
         analysis_result["saved_to_history"] = True
@@ -268,9 +270,12 @@ def llm_explain_alert(alert: AlertRequest):
 
 
 @app.get("/alerts/history", dependencies=[Depends(require_api_key)])
-def get_alert_history(limit: int = Query(default=25, ge=1, le=100)):
+def get_alert_history(
+    limit: int = Query(default=25, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
     try:
-        items = list_alert_history(limit=limit)
+        items = list_alert_history(db=db, limit=limit)
 
         logger.info(
             "alert_history_listed limit=%s returned_count=%s",
@@ -291,9 +296,12 @@ def get_alert_history(limit: int = Query(default=25, ge=1, le=100)):
 
 
 @app.get("/alerts/history/{history_id}", dependencies=[Depends(require_api_key)])
-def get_single_alert_history_record(history_id: int):
+def get_single_alert_history_record(
+    history_id: int,
+    db: Session = Depends(get_db)
+):
     try:
-        record = get_alert_history_record(history_id)
+        record = get_alert_history_record(db=db, history_id=history_id)
 
         if record is None:
             logger.info(
@@ -323,7 +331,10 @@ def get_single_alert_history_record(history_id: int):
 
 
 @app.delete("/alerts/history/{history_id}", dependencies=[Depends(require_api_key)])
-def delete_single_alert_history_record(history_id: int):
+def delete_single_alert_history_record(
+    history_id: int,
+    db: Session = Depends(get_db)
+):
     try:
         deleted = delete_alert_history_record(history_id)
 
