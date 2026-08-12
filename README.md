@@ -547,3 +547,10 @@ Instead of using `dangerouslySetInnerHTML`, the dashboard renders analysis data 
 
 This keeps alert fields treated as untrusted text and helps reduce the risk of accidental cross-site scripting.
 
+## Safe Coding: Parameter Validation for History Limits
+
+The alert history endpoint validates the `limit` query parameter.
+
+```python
+limit: int = Query(default=25, ge=1, le=100)
+```
