@@ -30,6 +30,26 @@ app = FastAPI(
     description="Scores Elastic-style security alerts based on evidence, missing context, false-positive indicators, MITRE ATT&CK mapping, and safe AI-style explanation.",
     version="0.3.0"
 )
+
+@app.middleware("http")
+async def log_requests_safely(request: Request, call_next):
+    logger.info(
+        "request_started method=%s path=%s",
+        request.method,
+        request.url.path
+    )
+
+    response = await call_next(request)
+
+    logger.info(
+        "request_completed method=%s path=%s status_code=%s",
+        request.method,
+        request.url.path,
+        response.status_code
+    )
+
+    return response
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -304,7 +324,9 @@ def get_alert_history(
     except Exception:
         logger.exception("alert_history_list_failed")
 
-        raise internal_server_error("Failed to retrieve alert history.")
+        raise internal_server_error(
+            "Failed to retrieve alert history."
+        )
 
 
 @app.get("/alerts/history/{history_id}", dependencies=[Depends(require_api_key)])
@@ -313,7 +335,10 @@ def get_single_alert_history_record(
     db: Session = Depends(get_db)
 ):
     try:
-        record = get_alert_history_record(db=db, history_id=history_id)
+        record = get_alert_history_record(
+            db=db,
+            history_id=history_id
+        )
 
         if record is None:
             logger.info(
@@ -339,7 +364,9 @@ def get_single_alert_history_record(
             history_id
         )
 
-        raise internal_server_error("Failed to retrieve alert history.")
+        raise internal_server_error(
+            "Failed to retrieve alert history record."
+        )
 
 
 @app.delete("/alerts/history/{history_id}", dependencies=[Depends(require_api_key)])
@@ -348,7 +375,10 @@ def delete_single_alert_history_record(
     db: Session = Depends(get_db)
 ):
     try:
-        deleted = delete_alert_history_record(history_id)
+        deleted = delete_alert_history_record(
+            db=db,
+            history_id=history_id
+        )
 
         if not deleted:
             logger.info(
@@ -377,7 +407,6 @@ def delete_single_alert_history_record(
             history_id
         )
 
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to delete alert history record."
+        raise internal_server_error(
+            "Failed to delete alert history record."
         )

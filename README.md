@@ -581,3 +581,36 @@ RUN adduser --disabled-password --gecos "" appuser \
 
 USER appuser
 ```
+
+## Safe Coding: Security Headers and Safe Logging
+
+The backend adds basic security headers to every response:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: no-referrer`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
+The backend also uses safe logging practices.
+
+Logged events include:
+
+- request start and completion
+- alert analysis completion
+- history lookup and deletion
+- invalid API-key attempts
+- database failures
+- LLM explanation failures
+
+The application avoids logging:
+
+- raw alert JSON
+- full command lines
+- API keys
+- passwords
+- bearer tokens
+- authorization headers
+- private keys
+- raw `.env` values
+
+Detailed backend errors are logged server-side, while API users receive safe generic error messages.

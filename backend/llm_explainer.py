@@ -10,8 +10,23 @@ load_dotenv()
 
 
 def is_llm_configured() -> bool:
-    return bool(os.getenv("OPENAI_API_KEY"))
+    api_key = os.getenv("OPENAI_API_KEY")
 
+    if not api_key:
+        return False
+
+    placeholder_values = {
+        "your_openai_api_key_here",
+        "your_api_key_here",
+        "change_me",
+        "changeme",
+        "your_real_key_here",
+    }
+
+    if api_key.strip().lower() in placeholder_values:
+        return False
+
+    return True
 
 def build_llm_prompt(
     alert: dict,
@@ -60,51 +75,59 @@ Analyst Next Steps:
 
 
 def generate_llm_explanation(
-    alert: dict,
-    score_result: dict,
-    mitre_result: dict,
-    next_steps: list
+    alert: dict[str, Any],
+    score_result: dict[str, Any],
+    mitre_result: dict[str, Any],
+    next_steps: list[str],
 ) -> dict[str, Any]:
-    """
-    Generates an LLM-based explanation.
-
-    Important:
-    The LLM does not decide the score.
-    The LLM only explains the already-calculated score.
-    """
-
     if not is_llm_configured():
+        logger.info("llm_explanation_skipped reason=api_key_not_configured")
+
         return {
             "enabled": False,
             "error": "OPENAI_API_KEY is not configured.",
-            "message": "Set OPENAI_API_KEY in your .env file to enable LLM explanations."
+            "message": "LLM explanation is disabled. The rule-based score is still valid."
         }
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-
-    prompt = build_llm_prompt(
-        alert=alert,
-        score_result=score_result,
-        mitre_result=mitre_result,
-        next_steps=next_steps
-    )
-
     try:
+        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        client = OpenAI()
+
+        prompt = build_llm_prompt(
+            alert=alert,
+            score_result=score_result,
+            mitre_result=mitre_result,
+            next_steps=next_steps
+        )
+
         response = client.responses.create(
             model=model,
             input=prompt
+        )
+
+        logger.info(
+            "llm_explanation_completed model=%s alert_type=%s score=%s",
+            model,
+            score_result.get("alert_type", "unknown"),
+            score_result.get("score", "unknown")
         )
 
         return {
             "enabled": True,
             "model": model,
             "explanation": response.output_text,
-            "safety_note": "The LLM explanation is based on the existing score result. It does not calculate or override the confidence score."
+            "safety_note": (
+                "The LLM explanation summarizes the existing deterministic score. "
+                "It does not create or modify the confidence score."
+            )
         }
 
     except Exception:
-        logger.exception("llm_explanation_failed")
+        logger.exception(
+            "llm_explanation_failed alert_type=%s score=%s",
+            score_result.get("alert_type", "unknown"),
+            score_result.get("score", "unknown")
+        )
 
         return {
             "enabled": False,

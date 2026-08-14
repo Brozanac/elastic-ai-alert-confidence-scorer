@@ -84,11 +84,24 @@ def save_alert_analysis(
         db.commit()
         db.refresh(record)
 
+        logger.info(
+            "database_alert_analysis_saved history_id=%s alert_type=%s score=%s",
+            record.id,
+            record.alert_type,
+            record.score
+        )
+
         return serialize_history_record(record, include_full_analysis=False)
 
     except Exception:
         db.rollback()
-        logger.exception("database_save_alert_analysis_failed")
+
+        logger.exception(
+            "database_save_alert_analysis_failed alert_name=%s alert_type=%s",
+            analysis_result.get("alert_name", "unknown"),
+            analysis_result.get("alert_type", "unknown")
+        )
+
         raise
 
 
@@ -101,13 +114,23 @@ def list_alert_history(db: Session, limit: int = 25) -> list[dict[str, Any]]:
             .all()
         )
 
+        logger.info(
+            "database_alert_history_listed limit=%s returned_count=%s",
+            limit,
+            len(records)
+        )
+
         return [
             serialize_history_record(record, include_full_analysis=False)
             for record in records
         ]
 
     except Exception:
-        logger.exception("database_list_alert_history_failed")
+        logger.exception(
+            "database_list_alert_history_failed limit=%s",
+            limit
+        )
+
         raise
 
 
@@ -144,10 +167,19 @@ def delete_alert_history_record(db: Session, history_id: int) -> bool:
         )
 
         if record is None:
+            logger.info(
+                "database_alert_history_delete_not_found history_id=%s",
+                history_id
+            )
             return False
 
         db.delete(record)
         db.commit()
+
+        logger.info(
+            "database_alert_history_record_deleted history_id=%s",
+            history_id
+        )
 
         return True
 
@@ -158,8 +190,8 @@ def delete_alert_history_record(db: Session, history_id: int) -> bool:
             "database_delete_alert_history_record_failed history_id=%s",
             history_id
         )
-        raise
 
+        raise
 
 def safe_json_loads(value: str | None, fallback: Any) -> Any:
     if not value:
