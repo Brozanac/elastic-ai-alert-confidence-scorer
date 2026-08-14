@@ -569,3 +569,15 @@ def get_db():
     finally:
         db.close()
 ```
+## Safe Coding: Non-Root Backend Container
+
+The backend Docker image runs the FastAPI application as a non-root user.
+
+The Dockerfile creates a dedicated application user:
+
+```dockerfile
+RUN adduser --disabled-password --gecos "" appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
+```

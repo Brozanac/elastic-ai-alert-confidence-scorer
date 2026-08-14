@@ -1,4 +1,5 @@
 import json
+import os
 from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,7 +10,9 @@ from redaction import create_redacted_copy
 from sqlalchemy import Column, DateTime, Integer, String, Text, create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
-DB_PATH = Path(__file__).parent / "alert_history.db"
+DEFAULT_DB_PATH = Path(__file__).parent / "alert_history.db"
+DB_PATH = Path(os.getenv("DATABASE_PATH", str(DEFAULT_DB_PATH)))
+
 DATABASE_URL = f"sqlite:///{DB_PATH.as_posix()}"
 
 engine = create_engine(
