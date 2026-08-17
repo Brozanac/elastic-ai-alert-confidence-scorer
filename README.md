@@ -614,3 +614,43 @@ The application avoids logging:
 - raw `.env` values
 
 Detailed backend errors are logged server-side, while API users receive safe generic error messages.
+
+## Security Scanning
+
+Run Python dependency audit:
+
+```bash
+python -m pip_audit -r requirements.txt
+```
+
+Run Python security linting:
+
+```bash
+python -m bandit -r backend
+```
+
+Run frontend dependency audit:
+```bash
+cd frontend
+npm audit
+```
+
+Run tests:
+
+```bash
+python -m pytest -v
+```
+
+## Safe Coding: Dependency, Secret, and Abuse-Case Testing
+
+The project includes security checks for dependencies, source code, secrets, and abuse-case behavior.
+
+Local commands:
+
+```bash
+python -m pytest -v
+python -m pip-audit -r requirements.txt
+python -m bandit -r backend
+gitleaks detect --source . --verbose
+cd frontend && npm audit
+```
