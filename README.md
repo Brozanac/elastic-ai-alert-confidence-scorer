@@ -654,3 +654,12 @@ python -m bandit -r backend
 gitleaks detect --source . --verbose
 cd frontend && npm audit
 ```
+## ISO/IEC 27001:2022 Alignment
+
+This project is not an ISO/IEC 27001-certified system by itself. ISO/IEC 27001 certification applies to an organization's information security management system.
+
+However, this repository includes an ISO/IEC 27001:2022-aligned security package under:
+
+```text
+docs/iso27001/
+```
