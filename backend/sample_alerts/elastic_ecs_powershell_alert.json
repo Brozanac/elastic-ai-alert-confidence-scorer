@@ -1,0 +1,78 @@
+{
+  "@timestamp": "2026-08-20T08:00:00.000Z",
+  "ecs": {
+    "version": "9.5.0"
+  },
+  "event": {
+    "kind": "signal",
+    "category": ["process"],
+    "type": ["start"],
+    "action": "process_start",
+    "risk_score": 73,
+    "risk_score_norm": 73,
+    "severity": 73,
+    "dataset": "endpoint.events.process",
+    "module": "endpoint",
+    "id": "event-12345"
+  },
+  "rule": {
+    "id": "rule-001",
+    "uuid": "5f9b2e52-fake-demo-rule",
+    "name": "Suspicious PowerShell Encoded Command",
+    "description": "Detects PowerShell execution with encoded command arguments.",
+    "ruleset": "Elastic Security",
+    "version": "1"
+  },
+  "host": {
+    "name": "win-dev-01",
+    "hostname": "WIN-DEV-01",
+    "os": {
+      "type": "windows",
+      "name": "Windows 11"
+    }
+  },
+  "user": {
+    "name": "user"
+  },
+  "process": {
+    "name": "powershell.exe",
+    "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "command_line": "powershell.exe -NoP -W Hidden -enc SQBFAFgA...",
+    "args": [
+      "powershell.exe",
+      "-NoP",
+      "-W",
+      "Hidden",
+      "-enc",
+      "SQBFAFgA..."
+    ],
+    "args_count": 6,
+    "parent": {
+      "name": "winword.exe",
+      "executable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE"
+    }
+  },
+  "source": {
+    "ip": "10.0.0.20"
+  },
+  "destination": {
+    "ip": "185.199.108.133",
+    "port": 443
+  },
+  "network": {
+    "transport": "tcp",
+    "protocol": "https",
+    "direction": "outbound"
+  },
+  "threat": {
+    "framework": "MITRE ATT&CK",
+    "tactic": {
+      "id": ["TA0002"],
+      "name": ["Execution"]
+    },
+    "technique": {
+      "id": ["T1059.001"],
+      "name": ["PowerShell"]
+    }
+  }
+}

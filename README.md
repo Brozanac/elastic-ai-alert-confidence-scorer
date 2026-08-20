@@ -21,6 +21,44 @@ The goal is to help analysts understand whether an alert has enough supporting e
 - React dashboard
 - Docker support
 
+## Elastic ECS Alert Support
+
+The backend accepts Elastic Common Schema shaped alert documents.
+
+Supported ECS fields include:
+
+- `@timestamp`
+- `ecs.version`
+- `event.kind`
+- `event.category`
+- `event.type`
+- `event.action`
+- `event.risk_score`
+- `event.risk_score_norm`
+- `event.severity`
+- `rule.name`
+- `rule.id`
+- `rule.uuid`
+- `host.name`
+- `user.name`
+- `process.name`
+- `process.command_line`
+- `process.parent.name`
+- `source.ip`
+- `destination.ip`
+- `destination.port`
+- `network.protocol`
+- `network.direction`
+- `file.name`
+- `file.path`
+- `file.hash`
+- `threat.tactic.*`
+- `threat.technique.*`
+
+The application normalizes ECS input into an internal scoring format before applying deterministic confidence scoring.
+
+The optional LLM explanation only explains the deterministic result. It does not calculate or override the confidence score.
+
 ## Architecture
 
 ```text

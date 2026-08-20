@@ -121,7 +121,7 @@ def test_html_like_payload_does_not_crash_or_expose_internal_errors():
                 "name": "WIN-DEV-01"
             },
             "user": {
-                "name": "ulas"
+                "name": "user"
             },
             "process": {
                 "name": "powershell.exe",
@@ -242,7 +242,7 @@ def test_saved_history_redacts_secrets(monkeypatch):
             "name": "WIN-DEV-01"
         },
         "user": {
-            "name": "ulas"
+            "name": "user"
         },
         "process": {
             "name": "powershell.exe",

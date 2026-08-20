@@ -7,6 +7,7 @@ from context_loader import load_environment_context
 from database import (delete_alert_history_record, get_alert_history_record,
                       get_db, init_db, list_alert_history, save_alert_analysis)
 from dotenv import load_dotenv
+from elastic_normalizer import normalize_elastic_alert_for_scoring
 from errors import internal_server_error, not_found
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +24,7 @@ configure_logging()
 load_dotenv()
 
 def alert_to_dict(alert: AlertRequest) -> dict:
-    return alert.model_dump(exclude_none=True)
+    return alert.model_dump(exclude_none=True, by_alias=True,)
 
 app = FastAPI(
     title="Elastic AI Alert Confidence Scorer",
@@ -132,7 +133,8 @@ def health_check():
 
 @app.post("/score-alert")
 def score_elastic_alert(alert: AlertRequest):
-    alert_dict = alert_to_dict(alert)
+    raw_alert_dict = alert_to_dict(alert)
+    alert_dict = normalize_elastic_alert_for_scoring(raw_alert_dict)
 
     score_result = score_alert(alert_dict)
     mitre_result = map_mitre(alert_dict)
@@ -159,7 +161,8 @@ def score_elastic_alert(alert: AlertRequest):
 
 @app.post("/score-alert/report")
 def score_elastic_alert_report(alert: AlertRequest):
-    alert_dict = alert_to_dict(alert)
+    raw_alert_dict = alert_to_dict(alert)
+    alert_dict = normalize_elastic_alert_for_scoring(raw_alert_dict)
 
     score_result = score_alert(alert_dict)
     mitre_result = map_mitre(alert_dict)
@@ -175,7 +178,8 @@ def score_elastic_alert_report(alert: AlertRequest):
 
 @app.post("/score-alert/explain")
 def explain_elastic_alert(alert: AlertRequest):
-    alert_dict = alert_to_dict(alert)
+    raw_alert_dict = alert_to_dict(alert)
+    alert_dict = normalize_elastic_alert_for_scoring(raw_alert_dict)
 
     score_result = score_alert(alert_dict)
     mitre_result = map_mitre(alert_dict)
@@ -199,7 +203,8 @@ def explain_elastic_alert(alert: AlertRequest):
 
 @app.post("/score-alert/full")
 def full_elastic_alert_analysis(alert: AlertRequest, db: Session = Depends(get_db)):
-    alert_dict = alert_to_dict(alert)
+    raw_alert_dict = alert_to_dict(alert)
+    alert_dict = normalize_elastic_alert_for_scoring(raw_alert_dict)
 
     try:
         score_result = score_alert(alert_dict)
@@ -268,7 +273,8 @@ def full_elastic_alert_analysis(alert: AlertRequest, db: Session = Depends(get_d
 
 @app.post("/score-alert/llm-explain")
 def llm_explain_alert(alert: AlertRequest):
-    alert_dict = alert_to_dict(alert)
+    raw_alert_dict = alert_to_dict(alert)
+    alert_dict = normalize_elastic_alert_for_scoring(raw_alert_dict)
 
     score_result = score_alert(alert_dict)
     mitre_result = map_mitre(alert_dict)
