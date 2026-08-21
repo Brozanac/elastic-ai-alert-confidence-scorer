@@ -227,30 +227,40 @@ def full_elastic_alert_analysis(alert: AlertRequest, db: Session = Depends(get_d
         )
 
         analysis_result = {
-            "alert_name": score_result.get("rule_name"),
-            "alert_type": score_result.get("alert_type"),
-            "host": score_result.get("host"),
-            "user": score_result.get("user"),
-            "confidence": {
-                "score": score_result.get("score"),
-                "level": score_result.get("confidence")
-            },
-            "score_breakdown": score_result.get("score_breakdown"),
-            "scoring_events": score_result.get("scoring_events"),
-            "evidence": score_result.get("evidence"),
-            "missing_context": score_result.get("missing_context"),
-            "false_positive_notes": score_result.get("false_positive_notes"),
-            "mitre_mapping": mitre_result,
-            "analyst_next_steps": next_steps,
-            "ai_style_explanation": explanation,
-            "llm_explanation": llm_result,
-            "markdown_report": markdown_report
-        }
+    "alert_name": score_result.get("rule_name"),
+    "alert_type": score_result.get("alert_type"),
+    "host": score_result.get("host"),
+    "user": score_result.get("user"),
+    "confidence": {
+        "score": score_result.get("score"),
+        "level": score_result.get("confidence")
+    },
+    "score_breakdown": score_result.get("score_breakdown"),
+    "scoring_events": score_result.get("scoring_events"),
+    "evidence": score_result.get("evidence"),
+    "missing_context": score_result.get("missing_context"),
+    "false_positive_notes": score_result.get("false_positive_notes"),
+    "mitre_mapping": mitre_result,
+    "analyst_next_steps": next_steps,
+    "ai_style_explanation": explanation,
+    "llm_explanation": llm_result,
+    "markdown_report": markdown_report,
+    "elastic_context": {
+        "timestamp": alert_dict.get("elastic", {}).get("timestamp"),
+        "ecs_version": alert_dict.get("elastic", {}).get("ecs_version"),
+        "event_id": alert_dict.get("elastic", {}).get("event_id"),
+        "event_dataset": alert_dict.get("elastic", {}).get("event_dataset"),
+        "event_module": alert_dict.get("elastic", {}).get("event_module"),
+        "event_kind": alert_dict.get("event", {}).get("kind"),
+        "event_category": alert_dict.get("event", {}).get("category"),
+        "event_type": alert_dict.get("event", {}).get("type"),
+    }
+}
 
         saved_record = save_alert_analysis(
-            db=db,
-            raw_alert=alert_dict,
-            analysis_result=analysis_result
+    db=db,
+    raw_alert=raw_alert_dict,
+    analysis_result=analysis_result
 )
 
         analysis_result["history_id"] = saved_record.get("id")
@@ -269,7 +279,7 @@ def full_elastic_alert_analysis(alert: AlertRequest, db: Session = Depends(get_d
     except Exception:
         logger.exception("full_alert_analysis_failed")
 
-        raise internal_server_error("Failed to retrieve alert history.")
+        raise internal_server_error("Alert analysis failed. Please try again.")
 
 @app.post("/score-alert/llm-explain")
 def llm_explain_alert(alert: AlertRequest):
