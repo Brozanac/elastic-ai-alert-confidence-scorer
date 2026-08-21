@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -47,19 +47,95 @@ class Process(FlexibleModel):
 
 
 class Event(FlexibleModel):
-    category: list[str] | None = None
-    action: str | None = Field(default=None, max_length=150)
-    outcome: str | None = Field(default=None, max_length=150)
-    created: str | None = Field(default=None, max_length=100)
+    kind: Literal[
+        "alert",
+        "asset",
+        "enrichment",
+        "event",
+        "metric",
+        "state",
+        "pipeline_error",
+        "signal",
+    ] | None = None
 
-    @field_validator("category")
+    category: list[
+        Literal[
+            "api",
+            "authentication",
+            "configuration",
+            "database",
+            "driver",
+            "email",
+            "file",
+            "host",
+            "iam",
+            "intrusion_detection",
+            "library",
+            "malware",
+            "network",
+            "package",
+            "process",
+            "registry",
+            "session",
+            "threat",
+            "vulnerability",
+            "web",
+        ]
+    ] | None = None
+
+    type: list[
+        Literal[
+            "access",
+            "admin",
+            "allowed",
+            "change",
+            "connection",
+            "creation",
+            "deletion",
+            "denied",
+            "device",
+            "end",
+            "error",
+            "group",
+            "indicator",
+            "info",
+            "installation",
+            "protocol",
+            "start",
+            "user",
+        ]
+    ] | None = None
+
+    action: str | None = Field(default=None, max_length=300)
+    outcome: Literal["failure", "success", "unknown"] | None = None
+
+    id: str | None = Field(default=None, max_length=300)
+    code: str | None = Field(default=None, max_length=300)
+    created: str | None = Field(default=None, max_length=100)
+    start: str | None = Field(default=None, max_length=100)
+    end: str | None = Field(default=None, max_length=100)
+    duration: int | None = Field(default=None, ge=0)
+
+    dataset: str | None = Field(default=None, max_length=300)
+    module: str | None = Field(default=None, max_length=200)
+    provider: str | None = Field(default=None, max_length=200)
+
+    risk_score: float | None = Field(default=None, ge=0)
+    risk_score_norm: float | None = Field(default=None, ge=0, le=100)
+    severity: int | None = Field(default=None, ge=0)
+
+    original: str | None = Field(default=None, max_length=20000)
+
+    @field_validator("category", "type")
     @classmethod
-    def validate_category_size(cls, value: list[str] | None) -> list[str] | None:
+    def validate_event_array_size(cls, value):
         if value is None:
             return value
 
         if len(value) > 20:
-            raise ValueError("event.category cannot contain more than 20 values")
+            raise ValueError(
+                "ECS event category/type arrays cannot contain more than 20 values"
+            )
 
         return value
 
